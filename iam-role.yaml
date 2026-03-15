@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Emfirge — Read-only IAM role for AWS security scanning.
+  This role grants Emfirge permission to read your infrastructure
+  and generate a security risk report. No write permissions are granted.
+  You can delete this stack at any time to revoke all access instantly.
+
+Parameters:
+  ExternalId:
+    Type: String
+    Default: aws-risk-agent
+    Description: External ID for additional security when assuming this role
+
+Resources:
+  EmfirgeReadOnlyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: EmfirgeReadOnlyRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::282027772803:root
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: aws-risk-agent
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecurityAudit
+      Policies:
+        - PolicyName: EmfirgeExtraPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - budgets:DescribeBudgets
+                  - guardduty:ListDetectors
+                  - guardduty:GetDetector
+                  - secretsmanager:ListSecrets
+                  - lambda:ListFunctions
+                  - iam:ListAttachedRolePolicies
+                  - iam:ListRolePolicies
+                  - iam:GetRolePolicy
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: Copy this Role ARN and paste it into Emfirge to start your scan
+    Value: !GetAtt EmfirgeReadOnlyRole.Arn
