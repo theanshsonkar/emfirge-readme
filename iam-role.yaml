@@ -43,6 +43,18 @@ Resources:
                   - iam:ListAttachedRolePolicies
                   - iam:ListRolePolicies
                   - iam:GetRolePolicy
+                  - ecs:ListTaskDefinitions
+                  - ecs:DescribeTaskDefinition
+                  - wafv2:GetWebAclForResource
+                  - sns:ListTopics
+                  - sns:GetTopicAttributes
+                  - kms:ListKeys
+                  - kms:DescribeKey
+                  - kms:GetKeyRotationStatus
+                  - config:DescribeConfigurationRecorders
+                  - config:DescribeConfigurationRecorderStatus
+                  - config:DescribeComplianceByConfigRule
+                  - cloudfront:ListDistributions
                 Resource: '*'
 
 Outputs:
