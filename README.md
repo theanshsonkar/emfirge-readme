@@ -1,7 +1,5 @@
 # Emfirge — AWS Access Setup
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-
 This repository contains the CloudFormation template that creates a **read-only IAM role** in your AWS account. Emfirge assumes this role to scan your infrastructure and generate a security risk report.
 
 **No write permissions are granted. You can delete the stack at any time to revoke all access instantly.**
