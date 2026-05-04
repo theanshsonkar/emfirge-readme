@@ -1,37 +1,32 @@
-# Emfirge — AWS Access Setup
+# Emfirge
 
-This repository contains the CloudFormation template that creates a **read-only IAM role** in your AWS account. Emfirge assumes this role to scan your infrastructure and generate a security risk report.
+AI cloud security agent. Scans your AWS infrastructure, maps attack paths, simulates breaches, and auto-remediates with one-click Terraform PRs.
 
-**No write permissions are granted. You can delete the stack at any time to revoke all access instantly.**
-
----
-
-## What it creates
-
-A single IAM role (`EmfirgeReadOnlyRole`) with:
-
-- **AWS SecurityAudit** managed policy — standard read-only access across AWS services
-- Additional read permissions for: GuardDuty, Secrets Manager, Lambda, ECS, WAF, KMS, AWS Config, CloudFront, SNS, Budgets
-- A trust policy that allows only Emfirge's AWS account to assume this role
-- An **External ID** condition — an extra security layer that prevents confused deputy attacks
-
-All permissions are read-only. Emfirge cannot create, modify, or delete any resource in your account.
+**Free during beta.** → [emfirge.cloud](https://emfirge.cloud)
 
 ---
 
-## Deploy
+## How it works
 
-### Option 1 — AWS Console (recommended)
+1. **Deploy a read-only IAM role** into your AWS account (60 seconds)
+2. **Paste the Role ARN** into Emfirge
+3. **Get a full security report** — findings, attack paths, toxic combos, risk scores, and AI-powered remediation
 
-1. Open the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation)
-2. Click **Create stack → With new resources**
-3. Select **Upload a template file** → upload `iam-role.yaml`
-4. Click through the steps — no parameters need to be changed
-5. Check the IAM acknowledgement box and click **Create stack**
-6. Once the stack shows `CREATE_COMPLETE`, open the **Outputs** tab
-7. Copy the **RoleArn** value
+Emfirge assumes the role, scans 16 AWS services, and returns results in under 30 seconds. No credentials are stored. No write access. You can revoke access instantly by deleting the CloudFormation stack.
 
-### Option 2 — AWS CLI
+---
+
+## Quick start
+
+### One-click deploy
+
+Click below to deploy the IAM role directly from the AWS Console:
+
+[![Launch Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://ap-south-1.console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/create/review?templateURL=https://emfirge-reports.s3.ap-south-1.amazonaws.com/cloudformation/iam-role.yaml&stackName=EmfirgeReadOnlyStack)
+
+Or go to [emfirge.cloud/scan.html](https://emfirge.cloud/scan.html) — the connect flow walks you through it step by step.
+
+### CLI deploy
 
 ```bash
 aws cloudformation deploy \
@@ -40,7 +35,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-Then get the ARN:
+Get the Role ARN:
 
 ```bash
 aws cloudformation describe-stacks \
@@ -49,54 +44,76 @@ aws cloudformation describe-stacks \
   --output text
 ```
 
----
-
-## Connect to Emfirge
-
-1. Go to [emfirge.vercel.app](https://emfirge.vercel.app)
-2. Paste the **Role ARN** from the CloudFormation output
-3. Click **Start Scan**
-
-Emfirge will assume the role, scan your infrastructure, and return a full security risk report.
+Then paste it at [emfirge.cloud](https://emfirge.cloud).
 
 ---
 
-## Permissions explained
+## What Emfirge scans
 
-| Permission group | Why Emfirge needs it |
+58 security rules across 16 AWS services:
+
+**Compute** — EC2, Lambda, ECS
+**Storage** — S3, EBS
+**Database** — RDS
+**Identity** — IAM, Secrets Manager, KMS
+**Network** — VPC, Security Groups, WAF, CloudFront, SNS
+**Observability** — CloudTrail, GuardDuty, CloudWatch, AWS Config
+**Cost** — Budgets, billing alarms, orphaned resources
+
+Each finding includes severity, confidence, blast radius, attack path, and MITRE ATT&CK mapping.
+
+---
+
+## What the IAM role grants
+
+A single read-only role (`EmfirgeReadOnlyRole`) with:
+
+| Permission | Why |
 |---|---|
-| SecurityAudit (managed) | Read EC2, S3, RDS, IAM, VPC, and 30+ services |
+| `SecurityAudit` (managed policy) | Read EC2, S3, RDS, IAM, VPC, and 30+ services |
 | GuardDuty | Check if threat detection is enabled |
-| Secrets Manager | Detect secrets without read access (list only) |
+| Secrets Manager | List secrets (no read access to values) |
 | Lambda | Scan function configs and attached roles |
-| ECS | Detect task roles and container permissions |
+| ECS | Detect privileged containers and task roles |
 | KMS | Check key rotation status |
-| AWS Config | Check if compliance recording is active |
-| WAF | Check if web ACLs are attached to resources |
-| CloudFront | Detect distributions without WAF or HTTPS |
+| AWS Config | Check compliance recording |
+| WAF | Check if web ACLs protect your ALBs |
+| CloudFront | Detect distributions for S3 context-aware rules |
 | Budgets | Detect if cost alerts are configured |
-| SNS | Check alert notification setup |
+| SNS | Check topic encryption and public access |
+
+**No write permissions. No data access. No credential storage.**
+
+---
+
+## Security model
+
+- **Read-only** — cannot create, modify, or delete any resource
+- **External ID** — prevents confused deputy attacks
+- **Scoped trust** — only Emfirge's AWS account (`282027772803`) can assume the role
+- **Temporary credentials** — STS tokens expire after the scan, never stored
+- **Instant revoke** — delete the CloudFormation stack and all access is gone
+
+Full details: [emfirge.cloud/security.html](https://emfirge.cloud/security.html)
 
 ---
 
 ## Revoke access
 
-Delete the CloudFormation stack at any time:
-
 ```bash
 aws cloudformation delete-stack --stack-name emfirge-access
 ```
 
-Or in the AWS Console: CloudFormation → select `emfirge-access` → Delete.
+Or in the AWS Console: CloudFormation → select the stack → Delete.
 
 The role is permanently removed. Emfirge loses access immediately.
 
 ---
 
-## Security
+## Links
 
-- **Read-only** — no permissions to create, modify, or delete resources
-- **External ID** — prevents third-party impersonation (confused deputy attack)
-- **Scoped trust** — only Emfirge's AWS account can assume this role
-- **No credentials stored** — Emfirge uses temporary STS tokens, never long-lived keys
-- **Deletable** — one command removes all access permanently
+- **Product** — [emfirge.cloud](https://emfirge.cloud)
+- **Trust & Security** — [emfirge.cloud/security.html](https://emfirge.cloud/security.html)
+- **About** — [emfirge.cloud/about.html](https://emfirge.cloud/about.html)
+
+Built by [Ansh Sonkar](https://github.com/theanshsonkar) · Founders, Inc. Canopy 2026
